@@ -27,7 +27,10 @@ def affine_forward(x, w, b):
     # will need to reshape the input into rows.                               #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    row_size = x.shape[0]
+    column_size = np.prod(x.shape[1:])
+    x_reshape = np.reshape(x, (row_size, column_size))
+    out = np.dot(x_reshape, w) + b
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -60,7 +63,12 @@ def affine_backward(dout, cache):
     # TODO: Implement the affine backward pass.                               #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    row_size = x.shape[0]
+    column_size = np.prod(x.shape[1:])
+    x_reshape = x.reshape(row_size, column_size)
+    dx = np.dot(dout, w.T).reshape(x.shape)
+    dw = np.dot(x_reshape.T, dout)
+    db = np.sum(dout, axis=0)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -86,7 +94,7 @@ def relu_forward(x):
     # TODO: Implement the ReLU forward pass.                                  #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    out = np.maximum(0, x)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -113,7 +121,9 @@ def relu_backward(dout, cache):
     # TODO: Implement the ReLU backward pass.                                 #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    dx = np.maximum(0, x)
+    dx[dx > 0] = 1
+    dx *= dout
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -767,12 +777,19 @@ def svm_loss(x, y):
     - dx: Gradient of the loss with respect to x
     """
     loss, dx = None, None
-
     ###########################################################################
     # TODO: Copy over your solution from A1.
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    dx = np.zeros_like(x)
+    correct_score = x[np.arange(x.shape[0]), y]
+    correct_score = np.reshape(correct_score, (x.shape[0], 1))
+    margins = x - correct_score + 1
+    margins[np.arange(x.shape[0]), y] = 0
+    margins[margins<=0] = 0
+    loss = np.sum(margins) / x.shape[0]
+    dx = (margins > 0).astype(float) / y.shape[0]
+    dx[range(y.shape[0]), y] -= dx.sum(axis=1)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -803,6 +820,14 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    N = len(y) # number of samples
+
+    P = np.exp(x - x.max(axis=1, keepdims=True)) # numerically stable exponents
+    P /= P.sum(axis=1, keepdims=True)            # row-wise probabilities (softmax)
+
+    loss = -np.log(P[range(N), y]).sum() / N # sum cross entropies as loss
+    P[range(N), y] -= 1
+    dx = P / N
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

@@ -81,7 +81,16 @@ def svm_loss_vectorized(W, X, y, reg):
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    num_classes = W.shape[1]
+    num_train = X.shape[0]
+    scores = X.dot(W)
+    # 分别取每个样例的正确class的分数
+    correct_class_score = scores[np.arange(num_train),y]
+    correct_class_score = np.reshape(correct_class_score, (num_train, 1))
+    margins = scores - correct_class_score + 1
+    margins[np.arange(num_train), y] = 0
+    margins[margins<=0] = 0
+    loss = np.sum(margins) / num_train + reg * np.sum(W*W)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -96,27 +105,12 @@ def svm_loss_vectorized(W, X, y, reg):
     # loss.                                                                     #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    margins[margins>0] = 1
+    row_sum = np.sum(margins, axis=1)
+    margins[np.arange(num_train), y] = -row_sum
+    dW += np.dot(X.T, margins) / num_train + reg * W
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    num_train= X.shape[0]  # N
-    num_classes = W.shape[1]  # C
-    scores = X.dot(W)  # N by C
-    scores_correct = scores[np.arange(num_train), y]  # 1 by N broadcasting
-    scores_correct = np.reshape(scores_correct, (num_train, 1)) # N by 1
-    margins = scores - scores_correct + 1.0
-    margins[np.arange(num_train), y] = 0.0
-    margins[margins<=0] = 0.0 #
-    loss += np.sum(margins) / num_train
-    loss += 0.5 * reg *np.sum(W * W)
-
-    #compute the gradient
-    margins[margins>0] = 1.0
-    row_sum = np.sum(margins, axis=1)
-    margins[np.arange(num_train), y] = -row_sum
-    dW += np.dot(X.T, margins)/num_train + reg* W
-
-    
     return loss, dW

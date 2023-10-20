@@ -81,7 +81,7 @@ def softmax_loss_vectorized(W, X, y, reg):
     scores -= np.max(scores, axis=1, keepdims=True)
     # 求概率，用指数矩阵除以每一行的指数行和
     prob = np.exp(scores) / np.sum(np.exp(scores), axis=1, keepdims=True)
-    # loss
+    # loss,只取第二维为y的元素，伟大的numpy！
     loss = -np.sum(np.log(prob[range(num_train), y]))
     loss = loss / num_train + 0.5 * reg * np.sum(W * W)
     
